@@ -125,6 +125,9 @@
 2. CDN 刷新有频率限制，请勿频繁操作，具体请参考各 CDN 提供商文档
 3. 同一 URL 在 5 秒内只会刷新一次（防抖）
 
+另外其他页面的路由可以参考我的缓存规则：
+![CDN 缓存规则示例](screenshots/img_5.png)
+后续有更新我会同步在 [https://b.ncii.cn/archives/FJdPvPT5](https://b.ncii.cn/archives/FJdPvPT5)
 ## 效果截图
 > 全站都使用 CDN 进行缓存了，除了 /console/\*, /api/\* 这些路由。
 ### 插件开启前
@@ -134,6 +137,7 @@
 ![ITdog 测速](screenshots/img_1.png)
 ![DevTool 响应](screenshots/img_3.png)
 
+![刷新日志](screenshots/img_4.png)  
 ## 开发
 
 ```bash
