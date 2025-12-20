@@ -1,0 +1,120 @@
+apiVersion: v1alpha1
+kind: Setting
+metadata:
+  name: cdn-cache-settings
+spec:
+  forms:
+    - group: basic
+      label: 基本设置
+      formSchema:
+        - $formkit: checkbox
+          name: enabled
+          label: 启用 CDN 缓存刷新
+          help: 开启后，文章发布或更新时将自动刷新相关页面的 CDN 缓存
+          value: false
+
+        - $formkit: select
+          name: provider
+          label: CDN 提供商
+          help: 选择您使用的 CDN 服务提供商
+          value: ALIYUN
+          options:
+            - label: 阿里云 CDN
+              value: ALIYUN
+            - label: 阿里云 ESA（边缘安全加速）
+              value: ALIYUN_ESA
+            - label: 腾讯云 CDN
+              value: TENCENT
+            - label: 腾讯云 EdgeOne
+              value: TENCENT_EDGEONE
+            - label: Cloudflare
+              value: CLOUDFLARE
+
+        - $formkit: text
+          name: accessKeyId
+          label: Access Key ID
+          help: 阿里云/腾讯云填写 Access Key ID
+
+        - $formkit: password
+          name: accessKeySecret
+          label: Access Key Secret
+          help: 阿里云/腾讯云填写 Access Key Secret
+
+        - $formkit: password
+          name: cloudflareToken
+          label: Cloudflare API Token
+          help: Cloudflare 专用，需要 Zone.Cache Purge 权限
+
+        - $formkit: text
+          name: zoneId
+          label: Zone ID / Site ID
+          help: 阿里云 ESA 填写 Site ID，腾讯云 EdgeOne 填写 Zone ID，Cloudflare 填写 Zone ID
+
+        - $formkit: text
+          name: siteDomain
+          label: 站点域名
+          help: 您的站点域名，例如 https://example.com
+          placeholder: https://example.com
+
+    - group: routes
+      label: 路由设置
+      formSchema:
+        - $formkit: text
+          name: archiveRoute
+          label: 归档页路由
+          help: 文章归档页的路由，默认是 archives
+          value: archives
+          placeholder: archives
+
+        - $formkit: text
+          name: categoryRoute
+          label: 分类页路由
+          help: 分类页的路由，默认是 categories
+          value: categories
+          placeholder: categories
+
+        - $formkit: text
+          name: tagRoute
+          label: 标签页路由
+          help: 标签页的路由，默认是 tags
+          value: tags
+          placeholder: tags
+
+    - group: refresh
+      label: 刷新选项
+      formSchema:
+        - $formkit: checkbox
+          name: refreshHomePage
+          label: 刷新首页
+          help: 文章发布时是否刷新首页缓存
+          value: true
+
+        - $formkit: checkbox
+          name: refreshArchivePage
+          label: 刷新归档页
+          help: 文章发布时是否刷新文章归档页缓存
+          value: true
+
+        - $formkit: checkbox
+          name: refreshCategoryPage
+          label: 刷新分类页
+          help: 文章发布时是否刷新分类页缓存
+          value: true
+
+        - $formkit: checkbox
+          name: refreshTagPage
+          label: 刷新标签页
+          help: 文章发布时是否刷新标签页缓存
+          value: true
+
+        - $formkit: checkbox
+          name: refreshOnComment
+          label: 评论后刷新
+          help: 评论审核通过后是否刷新对应文章页面的缓存
+          value: true
+
+        - $formkit: textarea
+          name: customPaths
+          label: 自定义刷新路径
+          help: 额外需要刷新的路径，多个路径用英文逗号分隔，例如：/about,/links,/sitemap.xml
+          placeholder: /about,/links

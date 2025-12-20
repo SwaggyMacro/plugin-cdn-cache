@@ -1,0 +1,23 @@
+# Refer https://docs.halo.run/developer-guide/plugin/basics/manifest
+
+apiVersion: plugin.halo.run/v1alpha1
+kind: Plugin
+metadata:
+  name: cdn-cache
+spec:
+  enabled: true
+  requires: ">=2.21.0"
+  author:
+    name: SwaggyMacro
+    website: https://github.com/SwaggyMacro
+  logo: logo.png
+  homepage: https://github.com/SwaggyMacro/plugin-cdn-cache#readme
+  repo: https://github.com/SwaggyMacro/plugin-cdn-cache
+  issues: https://github.com/SwaggyMacro/plugin-cdn-cache/issues
+  displayName: "CDN 缓存刷新"
+  description: "文章发布时自动刷新 CDN 缓存，支持阿里云、腾讯云、Cloudflare"
+  license:
+    - name: "GPL-3.0"
+      url: "https://github.com/SwaggyMacro/plugin-cdn-cache/blob/main/LICENSE"
+  settingName: "cdn-cache-settings"
+  configMapName: "cdn-cache-configmap"
