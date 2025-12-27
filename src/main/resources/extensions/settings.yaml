@@ -13,48 +13,121 @@ spec:
           help: 开启后，文章发布或更新时将自动刷新相关页面的 CDN 缓存
           value: false
 
-        - $formkit: select
-          name: provider
-          label: CDN 提供商
-          help: 选择您使用的 CDN 服务提供商
-          value: ALIYUN
-          options:
-            - label: 阿里云 CDN
-              value: ALIYUN
-            - label: 阿里云 ESA（边缘安全加速）
-              value: ALIYUN_ESA
-            - label: 腾讯云 CDN
-              value: TENCENT
-            - label: 腾讯云 EdgeOne
-              value: TENCENT_EDGEONE
-            - label: Cloudflare
-              value: CLOUDFLARE
-
-        - $formkit: text
-          name: accessKeyId
-          label: Access Key ID
-          help: 阿里云/腾讯云填写 Access Key ID
-
-        - $formkit: password
-          name: accessKeySecret
-          label: Access Key Secret
-          help: 阿里云/腾讯云填写 Access Key Secret
-
-        - $formkit: password
-          name: cloudflareToken
-          label: Cloudflare API Token
-          help: Cloudflare 专用，需要 Zone.Cache Purge 权限
-
-        - $formkit: text
-          name: zoneId
-          label: Zone ID / Site ID
-          help: 阿里云 ESA 填写 Site ID，腾讯云 EdgeOne 填写 Zone ID，Cloudflare 填写 Zone ID
-
         - $formkit: text
           name: siteDomain
           label: 站点域名
           help: 您的站点域名，例如 https://example.com
           placeholder: https://example.com
+
+    - group: providers
+      label: CDN 提供商
+      formSchema:
+        - $formkit: array
+          name: cdnProviders
+          label: CDN 提供商配置
+          help: 可以添加多个 CDN 提供商，发布文章时会同时刷新所有启用的 CDN
+          min: 0
+          max: 10
+          value: []
+          addLabel: 添加 CDN 提供商
+          itemLabels:
+            - type: text
+              label: "$value.name"
+          children:
+            - $formkit: text
+              name: name
+              label: 配置名称
+              help: 用于标识此配置，例如"主站 CDN"、"备用 CDN"
+              placeholder: 我的 CDN
+              validation: required
+
+            - $formkit: checkbox
+              name: enabled
+              label: 启用此配置
+              value: true
+
+            - $formkit: select
+              name: provider
+              label: CDN 提供商
+              help: 选择 CDN 服务提供商
+              value: ALIYUN
+              validation: required
+              options:
+                - label: 阿里云 CDN
+                  value: ALIYUN
+                - label: 阿里云 ESA（边缘安全加速）
+                  value: ALIYUN_ESA
+                - label: 腾讯云 CDN
+                  value: TENCENT
+                - label: 腾讯云 EdgeOne
+                  value: TENCENT_EDGEONE
+                - label: Cloudflare
+                  value: CLOUDFLARE
+                - label: 自定义 PURGE
+                  value: CUSTOM_PURGE
+
+            # 阿里云 CDN / 阿里云 ESA / 腾讯云 CDN / 腾讯云 EdgeOne 需要
+            - $formkit: text
+              name: accessKeyId
+              label: Access Key ID
+              help: 阿里云/腾讯云的 Access Key ID
+              if: "$value.provider === 'ALIYUN' || $value.provider === 'ALIYUN_ESA' || $value.provider === 'TENCENT' || $value.provider === 'TENCENT_EDGEONE'"
+              validation: required
+
+            - $formkit: password
+              name: accessKeySecret
+              label: Access Key Secret
+              help: 阿里云/腾讯云的 Access Key Secret
+              if: "$value.provider === 'ALIYUN' || $value.provider === 'ALIYUN_ESA' || $value.provider === 'TENCENT' || $value.provider === 'TENCENT_EDGEONE'"
+              validation: required
+
+            # Cloudflare 专用
+            - $formkit: password
+              name: cloudflareToken
+              label: Cloudflare API Token
+              help: 需要 Zone.Cache Purge 权限的 API Token
+              if: "$value.provider === 'CLOUDFLARE'"
+              validation: required
+
+            # 阿里云 ESA 需要 Site ID
+            - $formkit: text
+              name: zoneId
+              label: Site ID
+              help: 阿里云 ESA 的站点 ID
+              if: "$value.provider === 'ALIYUN_ESA'"
+              validation: required
+
+            # 腾讯云 EdgeOne 需要 Zone ID
+            - $formkit: text
+              name: zoneId
+              label: Zone ID
+              help: 腾讯云 EdgeOne 的 Zone ID
+              if: "$value.provider === 'TENCENT_EDGEONE'"
+              validation: required
+
+            # Cloudflare 需要 Zone ID
+            - $formkit: text
+              name: zoneId
+              label: Zone ID
+              help: Cloudflare 的 Zone ID，在域名概述页面可以找到
+              if: "$value.provider === 'CLOUDFLARE'"
+              validation: required
+
+            # 自定义 PURGE 配置 - 使用 textarea，每行一个 header，格式为 name:value
+            - $formkit: textarea
+              name: customHeadersText
+              label: 自定义请求头
+              help: "PURGE 请求需要携带的 HTTP Headers，每行一个，格式为 Header名称:Header值，例如：X-Cloud-Purge-Key:your-api-key"
+              placeholder: "X-Cloud-Purge-Key:your-api-key"
+              if: "$value.provider === 'CUSTOM_PURGE'"
+
+            - $formkit: text
+              name: successKeyword
+              label: 成功判断关键字
+              help: 响应内容中包含此字符串则认为清除成功，例如 "success" 或 "ok"
+              placeholder: success
+              if: "$value.provider === 'CUSTOM_PURGE'"
+              validation: required
 
     - group: routes
       label: 路由设置

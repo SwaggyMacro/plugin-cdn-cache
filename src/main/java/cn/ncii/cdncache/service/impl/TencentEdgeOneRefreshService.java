@@ -1,6 +1,6 @@
 package cn.ncii.cdncache.service.impl;
 
-import cn.ncii.cdncache.CdnSetting;
+import cn.ncii.cdncache.entity.CdnProviderConfig;
 import cn.ncii.cdncache.service.CdnRefreshService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -25,10 +25,10 @@ public class TencentEdgeOneRefreshService implements CdnRefreshService {
     private static final String ALGORITHM = "TC3-HMAC-SHA256";
 
     private final WebClient webClient;
-    private final CdnSetting setting;
+    private final CdnProviderConfig config;
 
-    public TencentEdgeOneRefreshService(CdnSetting setting) {
-        this.setting = setting;
+    public TencentEdgeOneRefreshService(CdnProviderConfig config) {
+        this.config = config;
         this.webClient = WebClient.builder()
                 .baseUrl("https://" + HOST)
                 .build();
@@ -54,8 +54,8 @@ public class TencentEdgeOneRefreshService implements CdnRefreshService {
     }
 
     private String buildPurgePayload(List<String> targets, String type) {
-        // EdgeOne 需要 ZoneId，从 siteDomain 配置中获取或单独配置
-        String zoneId = setting.getZoneId();
+        // EdgeOne 需要 ZoneId
+        String zoneId = config.getZoneId();
         
         StringBuilder sb = new StringBuilder();
         sb.append("{\"ZoneId\":\"").append(escapeJson(zoneId)).append("\",");
@@ -101,13 +101,13 @@ public class TencentEdgeOneRefreshService implements CdnRefreshService {
                     + credentialScope + "\n"
                     + hashedCanonicalRequest;
 
-            byte[] secretDate = hmac256(("TC3" + setting.getAccessKeySecret()).getBytes(StandardCharsets.UTF_8), date);
+            byte[] secretDate = hmac256(("TC3" + config.getAccessKeySecret()).getBytes(StandardCharsets.UTF_8), date);
             byte[] secretService = hmac256(secretDate, SERVICE);
             byte[] secretSigning = hmac256(secretService, "tc3_request");
             String signature = bytesToHex(hmac256(secretSigning, stringToSign));
 
             String authorization = ALGORITHM
-                    + " Credential=" + setting.getAccessKeyId() + "/" + credentialScope
+                    + " Credential=" + config.getAccessKeyId() + "/" + credentialScope
                     + ", SignedHeaders=" + signedHeaders
                     + ", Signature=" + signature;
 

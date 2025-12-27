@@ -1,6 +1,7 @@
 package cn.ncii.cdncache.endpoint;
 
 import cn.ncii.cdncache.CdnSetting;
+import cn.ncii.cdncache.entity.CdnProviderConfig;
 import cn.ncii.cdncache.entity.RefreshLog;
 import cn.ncii.cdncache.service.CdnRefreshService;
 import cn.ncii.cdncache.service.CdnRefreshServiceFactory;
@@ -13,12 +14,14 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.server.RouterFunction;
 import org.springframework.web.reactive.function.server.ServerRequest;
 import org.springframework.web.reactive.function.server.ServerResponse;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import run.halo.app.core.extension.endpoint.CustomEndpoint;
 import run.halo.app.extension.GroupVersion;
 import run.halo.app.plugin.ReactiveSettingFetcher;
 
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 
 import static org.springdoc.core.fn.builders.apiresponse.Builder.responseBuilder;
@@ -103,15 +106,36 @@ public class CdnRefreshEndpoint implements CustomEndpoint {
                                         .bodyValue(new RefreshResponse(false, "URL 列表不能为空", null));
                             }
 
-                            String provider = setting.getProvider().name();
-                            CdnRefreshService refreshService = serviceFactory.createService(setting);
-                            return refreshService.refreshUrls(req.urls())
-                                    .flatMap(result -> logService.saveLog(
-                                            provider, "MANUAL", null, null,
-                                            req.urls(), result.success(), result.taskId(),
-                                            result.message(), requestTime
-                                    ).then(ServerResponse.ok()
-                                            .bodyValue(new RefreshResponse(result.success(), result.message(), result.taskId()))));
+                            List<CdnProviderConfig> enabledProviders = setting.getEnabledProviders();
+                            if (enabledProviders.isEmpty()) {
+                                return ServerResponse.badRequest()
+                                        .bodyValue(new RefreshResponse(false, "没有配置有效的 CDN 提供商", null));
+                            }
+
+                            // 对所有启用的 CDN 提供商执行刷新
+                            return Flux.fromIterable(enabledProviders)
+                                    .flatMap(providerConfig -> {
+                                        String providerName = providerConfig.getName() != null ?
+                                                providerConfig.getName() : providerConfig.getProviderDisplayName();
+                                        String provider = providerConfig.getProvider().name();
+                                        
+                                        CdnRefreshService refreshService = serviceFactory.createService(providerConfig);
+                                        return refreshService.refreshUrls(req.urls())
+                                                .flatMap(result -> logService.saveLog(
+                                                        providerName + " (" + provider + ")", "MANUAL", null, null,
+                                                        req.urls(), result.success(), result.taskId(),
+                                                        result.message(), requestTime
+                                                ).thenReturn(result));
+                                    })
+                                    .collectList()
+                                    .flatMap(results -> {
+                                        boolean allSuccess = results.stream().allMatch(CdnRefreshService.RefreshResult::success);
+                                        long successCount = results.stream().filter(CdnRefreshService.RefreshResult::success).count();
+                                        String message = String.format("刷新完成: %d/%d 个 CDN 提供商成功", 
+                                                successCount, results.size());
+                                        return ServerResponse.ok()
+                                                .bodyValue(new RefreshResponse(allSuccess, message, null));
+                                    });
                         }))
                 .onErrorResume(e -> {
                     log.error("刷新 CDN 缓存失败", e);
@@ -149,20 +173,42 @@ public class CdnRefreshEndpoint implements CustomEndpoint {
                 .map(basic -> {
                     CdnSetting s = new CdnSetting();
                     if (basic.has("enabled")) s.setEnabled(basic.get("enabled").asBoolean(false));
-                    if (basic.has("provider")) {
-                        try { s.setProvider(CdnSetting.CdnProvider.valueOf(basic.get("provider").asText())); }
-                        catch (Exception e) { s.setProvider(CdnSetting.CdnProvider.ALIYUN); }
-                    }
-                    if (basic.has("accessKeyId")) s.setAccessKeyId(basic.get("accessKeyId").asText());
-                    if (basic.has("accessKeySecret")) s.setAccessKeySecret(basic.get("accessKeySecret").asText());
-                    if (basic.has("cloudflareToken")) s.setCloudflareToken(basic.get("cloudflareToken").asText());
-                    if (basic.has("zoneId")) s.setZoneId(basic.get("zoneId").asText());
                     if (basic.has("siteDomain")) s.setSiteDomain(basic.get("siteDomain").asText());
                     return s;
                 })
                 .switchIfEmpty(Mono.just(new CdnSetting()));
 
-        return basicMono.flatMap(setting -> 
+        return basicMono.flatMap(setting ->
+                settingFetcher.get("providers")
+                        .doOnNext(providersNode -> {
+                            if (providersNode.has("cdnProviders") && providersNode.get("cdnProviders").isArray()) {
+                                List<CdnProviderConfig> providers = new ArrayList<>();
+                                providersNode.get("cdnProviders").forEach(node -> {
+                                    CdnProviderConfig config = new CdnProviderConfig();
+                                    if (node.has("name")) config.setName(node.get("name").asText());
+                                    if (node.has("enabled")) config.setEnabled(node.get("enabled").asBoolean(true));
+                                    if (node.has("provider")) {
+                                        try {
+                                            config.setProvider(CdnSetting.CdnProvider.valueOf(node.get("provider").asText()));
+                                        } catch (Exception e) {
+                                            log.warn("无效的 CDN 提供商类型: {}", node.get("provider").asText());
+                                        }
+                                    }
+                                    if (node.has("accessKeyId")) config.setAccessKeyId(node.get("accessKeyId").asText());
+                                    if (node.has("accessKeySecret")) config.setAccessKeySecret(node.get("accessKeySecret").asText());
+                                    if (node.has("cloudflareToken")) config.setCloudflareToken(node.get("cloudflareToken").asText());
+                                    if (node.has("zoneId")) config.setZoneId(node.get("zoneId").asText());
+                                    // 自定义 PURGE 配置
+                                    if (node.has("successKeyword")) config.setSuccessKeyword(node.get("successKeyword").asText());
+                                    if (node.has("customHeadersText")) config.setCustomHeadersText(node.get("customHeadersText").asText());
+                                    providers.add(config);
+                                });
+                                setting.setProviders(providers);
+                            }
+                        })
+                        .then(Mono.just(setting))
+                        .switchIfEmpty(Mono.just(setting))
+        ).flatMap(setting -> 
             settingFetcher.get("routes")
                 .doOnNext(routes -> {
                     if (routes.has("archiveRoute")) setting.setArchiveRoute(routes.get("archiveRoute").asText("archives"));

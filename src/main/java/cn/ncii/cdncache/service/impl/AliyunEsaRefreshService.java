@@ -1,6 +1,6 @@
 package cn.ncii.cdncache.service.impl;
 
-import cn.ncii.cdncache.CdnSetting;
+import cn.ncii.cdncache.entity.CdnProviderConfig;
 import cn.ncii.cdncache.service.CdnRefreshService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.MediaType;
@@ -32,10 +32,10 @@ public class AliyunEsaRefreshService implements CdnRefreshService {
     private static final String ALIYUN_ESA_ENDPOINT = "https://" + ALIYUN_ESA_HOST;
     private static final String API_VERSION = "2024-09-10";
 
-    private final CdnSetting setting;
+    private final CdnProviderConfig config;
 
-    public AliyunEsaRefreshService(CdnSetting setting) {
-        this.setting = setting;
+    public AliyunEsaRefreshService(CdnProviderConfig config) {
+        this.config = config;
     }
 
     @Override
@@ -57,14 +57,14 @@ public class AliyunEsaRefreshService implements CdnRefreshService {
 
     private Mono<RefreshResult> doRefresh(List<String> contents, String type) {
         try {
-            if (setting.getZoneId() == null || setting.getZoneId().isBlank()) {
+            if (config.getZoneId() == null || config.getZoneId().isBlank()) {
                 return Mono.just(RefreshResult.failure("ESA 需要配置 Site ID"));
             }
 
             // 构建 JSON 请求体
             StringBuilder jsonBuilder = new StringBuilder();
             jsonBuilder.append("{");
-            jsonBuilder.append("\"SiteId\":").append(setting.getZoneId()).append(",");
+            jsonBuilder.append("\"SiteId\":").append(config.getZoneId()).append(",");
             jsonBuilder.append("\"Type\":\"").append(type).append("\",");
             jsonBuilder.append("\"Content\":{");
             
@@ -191,12 +191,12 @@ public class AliyunEsaRefreshService implements CdnRefreshService {
         
         // 计算签名
         Mac mac = Mac.getInstance("HmacSHA256");
-        mac.init(new SecretKeySpec(setting.getAccessKeySecret().getBytes(StandardCharsets.UTF_8), "HmacSHA256"));
+        mac.init(new SecretKeySpec(config.getAccessKeySecret().getBytes(StandardCharsets.UTF_8), "HmacSHA256"));
         byte[] signatureBytes = mac.doFinal(stringToSign.getBytes(StandardCharsets.UTF_8));
         String signatureValue = bytesToHex(signatureBytes);
         
         // 构建 Authorization 头
-        return "ACS3-HMAC-SHA256 Credential=" + setting.getAccessKeyId() +
+        return "ACS3-HMAC-SHA256 Credential=" + config.getAccessKeyId() +
                 ",SignedHeaders=" + signedHeaders.toString() +
                 ",Signature=" + signatureValue;
     }

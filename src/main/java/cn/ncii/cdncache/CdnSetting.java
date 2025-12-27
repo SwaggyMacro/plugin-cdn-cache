@@ -1,6 +1,10 @@
 package cn.ncii.cdncache;
 
+import cn.ncii.cdncache.entity.CdnProviderConfig;
 import lombok.Data;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * CDN 配置设置
@@ -14,19 +18,9 @@ public class CdnSetting {
     public static final String GROUP = "basic";
 
     /**
-     * CDN 提供商类型
+     * 是否启用 CDN 缓存刷新
      */
-    private CdnProvider provider = CdnProvider.ALIYUN;
-
-    /**
-     * Access Key ID
-     */
-    private String accessKeyId;
-
-    /**
-     * Access Key Secret
-     */
-    private String accessKeySecret;
+    private Boolean enabled = false;
 
     /**
      * 站点域名（用于构建刷新 URL）
@@ -34,9 +28,9 @@ public class CdnSetting {
     private String siteDomain;
 
     /**
-     * 是否启用
+     * CDN 提供商配置列表（支持多个 CDN）
      */
-    private Boolean enabled = false;
+    private List<CdnProviderConfig> providers = new ArrayList<>();
 
     /**
      * 是否刷新首页
@@ -69,16 +63,6 @@ public class CdnSetting {
     private String customPaths;
 
     /**
-     * Zone ID（EdgeOne/Cloudflare/ESA 需要）
-     */
-    private String zoneId;
-
-    /**
-     * Cloudflare API Token
-     */
-    private String cloudflareToken;
-
-    /**
      * 归档页路由
      */
     private String archiveRoute = "archives";
@@ -94,6 +78,18 @@ public class CdnSetting {
     private String tagRoute = "tags";
 
     /**
+     * 获取所有启用且有效的 CDN 提供商配置
+     */
+    public List<CdnProviderConfig> getEnabledProviders() {
+        if (providers == null) {
+            return List.of();
+        }
+        return providers.stream()
+                .filter(p -> Boolean.TRUE.equals(p.getEnabled()) && p.isValid())
+                .toList();
+    }
+
+    /**
      * CDN 提供商枚举
      */
     public enum CdnProvider {
@@ -101,6 +97,7 @@ public class CdnSetting {
         ALIYUN_ESA,      // 阿里云 ESA（边缘安全加速）
         TENCENT,         // 腾讯云 CDN
         TENCENT_EDGEONE, // 腾讯云 EdgeOne
-        CLOUDFLARE       // Cloudflare
+        CLOUDFLARE,      // Cloudflare
+        CUSTOM_PURGE     // 自定义 PURGE 方法
     }
 }

@@ -1,6 +1,6 @@
 package cn.ncii.cdncache.service.impl;
 
-import cn.ncii.cdncache.CdnSetting;
+import cn.ncii.cdncache.entity.CdnProviderConfig;
 import cn.ncii.cdncache.service.CdnRefreshService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.MediaType;
@@ -24,13 +24,13 @@ public class CloudflareCdnRefreshService implements CdnRefreshService {
     private static final String CLOUDFLARE_API_ENDPOINT = "https://api.cloudflare.com/client/v4";
 
     private final WebClient webClient;
-    private final CdnSetting setting;
+    private final CdnProviderConfig config;
 
-    public CloudflareCdnRefreshService(CdnSetting setting) {
-        this.setting = setting;
+    public CloudflareCdnRefreshService(CdnProviderConfig config) {
+        this.config = config;
         this.webClient = WebClient.builder()
                 .baseUrl(CLOUDFLARE_API_ENDPOINT)
-                .defaultHeader("Authorization", "Bearer " + setting.getCloudflareToken())
+                .defaultHeader("Authorization", "Bearer " + config.getCloudflareToken())
                 .defaultHeader("Content-Type", "application/json")
                 .build();
     }
@@ -41,8 +41,8 @@ public class CloudflareCdnRefreshService implements CdnRefreshService {
             return Mono.just(RefreshResult.failure("URL 列表为空"));
         }
 
-        String token = setting.getCloudflareToken();
-        String zoneId = setting.getZoneId();
+        String token = config.getCloudflareToken();
+        String zoneId = config.getZoneId();
         
         log.info("Cloudflare CDN 刷新请求: zoneId={}, token长度={}, urls={}", 
                 zoneId, token != null ? token.length() : 0, urls);
@@ -93,8 +93,8 @@ public class CloudflareCdnRefreshService implements CdnRefreshService {
         // 这里使用 purge_everything 作为目录刷新的替代方案
         log.warn("Cloudflare 不支持目录刷新，将执行全站缓存清除");
 
-        String token = setting.getCloudflareToken();
-        String zoneId = setting.getZoneId();
+        String token = config.getCloudflareToken();
+        String zoneId = config.getZoneId();
         
         if (token == null || token.isBlank()) {
             return Mono.just(RefreshResult.failure("Cloudflare API Token 未配置"));

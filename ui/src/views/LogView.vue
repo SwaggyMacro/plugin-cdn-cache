@@ -79,7 +79,8 @@ const clearAllLogs = async () => {
       try {
         await axiosInstance.delete('/apis/cdn-cache.halo.run/v1alpha1/logs')
         Toast.success('清空成功')
-        fetchLogs()
+        // 直接清空本地数据，无需等待 fetchLogs
+        logs.value = []
       } catch (e) {
         Toast.error('清空失败')
       }

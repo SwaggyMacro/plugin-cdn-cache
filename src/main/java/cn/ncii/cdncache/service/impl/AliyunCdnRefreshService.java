@@ -1,6 +1,6 @@
 package cn.ncii.cdncache.service.impl;
 
-import cn.ncii.cdncache.CdnSetting;
+import cn.ncii.cdncache.entity.CdnProviderConfig;
 import cn.ncii.cdncache.service.CdnRefreshService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.MediaType;
@@ -30,10 +30,10 @@ public class AliyunCdnRefreshService implements CdnRefreshService {
     private static final String API_VERSION = "2018-05-10";
 
     private final WebClient webClient;
-    private final CdnSetting setting;
+    private final CdnProviderConfig config;
 
-    public AliyunCdnRefreshService(CdnSetting setting) {
-        this.setting = setting;
+    public AliyunCdnRefreshService(CdnProviderConfig config) {
+        this.config = config;
         this.webClient = WebClient.builder()
                 .baseUrl(ALIYUN_CDN_ENDPOINT)
                 .build();
@@ -68,7 +68,7 @@ public class AliyunCdnRefreshService implements CdnRefreshService {
             // 公共参数
             params.put("Format", "JSON");
             params.put("Version", API_VERSION);
-            params.put("AccessKeyId", setting.getAccessKeyId());
+            params.put("AccessKeyId", config.getAccessKeyId());
             params.put("SignatureMethod", "HMAC-SHA1");
             params.put("SignatureVersion", "1.0");
             params.put("SignatureNonce", UUID.randomUUID().toString());
@@ -85,7 +85,7 @@ public class AliyunCdnRefreshService implements CdnRefreshService {
             params.put("ObjectType", objectType);
 
             // 生成签名
-            String signature = sign(params, setting.getAccessKeySecret());
+            String signature = sign(params, config.getAccessKeySecret());
             params.put("Signature", signature);
 
             // 构建完整 URL

@@ -1,6 +1,6 @@
 package cn.ncii.cdncache.service.impl;
 
-import cn.ncii.cdncache.CdnSetting;
+import cn.ncii.cdncache.entity.CdnProviderConfig;
 import cn.ncii.cdncache.service.CdnRefreshService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.MediaType;
@@ -27,10 +27,10 @@ public class TencentCdnRefreshService implements CdnRefreshService {
     private static final String ALGORITHM = "TC3-HMAC-SHA256";
 
     private final WebClient webClient;
-    private final CdnSetting setting;
+    private final CdnProviderConfig config;
 
-    public TencentCdnRefreshService(CdnSetting setting) {
-        this.setting = setting;
+    public TencentCdnRefreshService(CdnProviderConfig config) {
+        this.config = config;
         this.webClient = WebClient.builder()
                 .baseUrl("https://" + HOST)
                 .build();
@@ -110,14 +110,14 @@ public class TencentCdnRefreshService implements CdnRefreshService {
             log.debug("StringToSign:\n{}", stringToSign);
 
             // 3. 计算签名
-            byte[] secretDate = hmac256(("TC3" + setting.getAccessKeySecret()).getBytes(StandardCharsets.UTF_8), date);
+            byte[] secretDate = hmac256(("TC3" + config.getAccessKeySecret()).getBytes(StandardCharsets.UTF_8), date);
             byte[] secretService = hmac256(secretDate, SERVICE);
             byte[] secretSigning = hmac256(secretService, "tc3_request");
             String signature = bytesToHex(hmac256(secretSigning, stringToSign));
 
             // 4. 拼接 Authorization
             String authorization = ALGORITHM
-                    + " Credential=" + setting.getAccessKeyId() + "/" + credentialScope
+                    + " Credential=" + config.getAccessKeyId() + "/" + credentialScope
                     + ", SignedHeaders=" + signedHeaders
                     + ", Signature=" + signature;
 
