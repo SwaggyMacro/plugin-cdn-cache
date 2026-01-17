@@ -40,12 +40,17 @@ class CdnRefreshEndpointTest {
         ObjectMapper mapper = new ObjectMapper();
         ObjectNode basicNode = mapper.createObjectNode().put("enabled", true);
         ObjectNode providersNode = mapper.createObjectNode();
-        providersNode.putArray("cdnProviders")
-                .addObject()
+        var providersArray = providersNode.putArray("cdnProviders");
+        providersArray.addObject()
                 .put("enabled", true)
                 .put("provider", "TENCENT")
                 .put("accessKeyId", "test-id")
                 .put("accessKeySecret", "test-secret");
+        providersArray.addObject()
+                .put("enabled", true)
+                .put("provider", "ALIYUN")
+                .put("accessKeyId", "test-id-2")
+                .put("accessKeySecret", "test-secret-2");
 
         when(settingFetcher.get("basic")).thenReturn(Mono.just(basicNode));
         when(settingFetcher.get("providers")).thenReturn(Mono.just(providersNode));
@@ -53,7 +58,8 @@ class CdnRefreshEndpointTest {
         when(settingFetcher.get("refresh")).thenReturn(Mono.just(mapper.createObjectNode()));
         when(serviceFactory.createService(any())).thenReturn(refreshService);
         when(refreshService.refreshUrls(anyList()))
-                .thenReturn(Mono.just(CdnRefreshService.RefreshResult.success("task-123")));
+                .thenReturn(Mono.just(CdnRefreshService.RefreshResult.success("task-123")))
+                .thenReturn(Mono.just(CdnRefreshService.RefreshResult.success("task-456")));
         when(logService.saveLog(any(), any(), any(), any(), anyList(), anyBoolean(), any(), any(), any()))
                 .thenReturn(Mono.just(new RefreshLog()));
 
@@ -67,6 +73,6 @@ class CdnRefreshEndpointTest {
                 .exchange()
                 .expectStatus().isOk()
                 .expectBody()
-                .jsonPath("$.taskId").isEqualTo("task-123");
+                .jsonPath("$.taskId").isEqualTo("task-123, task-456");
     }
 }

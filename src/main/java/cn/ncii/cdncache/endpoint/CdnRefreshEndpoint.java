@@ -134,9 +134,10 @@ public class CdnRefreshEndpoint implements CustomEndpoint {
                                         String message = String.format("刷新完成: %d/%d 个 CDN 提供商成功",
                                                 successCount, results.size());
                                         String taskId = results.stream()
+                                                .filter(CdnRefreshService.RefreshResult::success)
                                                 .map(CdnRefreshService.RefreshResult::taskId)
                                                 .filter(StringUtils::isNotBlank)
-                                                .findFirst()
+                                                .reduce((first, second) -> first + ", " + second)
                                                 .orElse(null);
                                         return ServerResponse.ok()
                                                 .bodyValue(new RefreshResponse(allSuccess, message, taskId));
