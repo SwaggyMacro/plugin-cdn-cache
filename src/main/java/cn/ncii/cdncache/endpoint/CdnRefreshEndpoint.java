@@ -131,10 +131,15 @@ public class CdnRefreshEndpoint implements CustomEndpoint {
                                     .flatMap(results -> {
                                         boolean allSuccess = results.stream().allMatch(CdnRefreshService.RefreshResult::success);
                                         long successCount = results.stream().filter(CdnRefreshService.RefreshResult::success).count();
-                                        String message = String.format("刷新完成: %d/%d 个 CDN 提供商成功", 
+                                        String message = String.format("刷新完成: %d/%d 个 CDN 提供商成功",
                                                 successCount, results.size());
+                                        String taskId = results.stream()
+                                                .map(CdnRefreshService.RefreshResult::taskId)
+                                                .filter(StringUtils::isNotBlank)
+                                                .findFirst()
+                                                .orElse(null);
                                         return ServerResponse.ok()
-                                                .bodyValue(new RefreshResponse(allSuccess, message, null));
+                                                .bodyValue(new RefreshResponse(allSuccess, message, taskId));
                                     });
                         }))
                 .onErrorResume(e -> {
