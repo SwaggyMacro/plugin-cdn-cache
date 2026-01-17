@@ -166,7 +166,7 @@ onMounted(() => {
     </VCard>
 
     <!-- 日志列表 -->
-    <VCard :body-class="['!p-0']" title="刷新日志">
+    <VCard :body-class="['!p-0']" title="刷新日志" class="log-card">
       <template #actions>
         <VSpace>
           <VButton size="sm" @click="fetchLogs">
@@ -238,6 +238,10 @@ onMounted(() => {
 
 .refresh-card {
   margin-bottom: 0;
+}
+
+.log-card :deep(.card-header) {
+  padding-right: 16px;
 }
 
 .refresh-form {
