@@ -240,7 +240,13 @@ public class ScheduledUriRefreshTask {
     }
 
     private boolean isNestedSitemap(String url) {
-        return url.endsWith(".xml");
+        try {
+            URI uri = URI.create(url);
+            String path = StringUtils.lowerCase(StringUtils.defaultString(uri.getPath()));
+            return path.endsWith(".xml") && path.contains("sitemap");
+        } catch (IllegalArgumentException e) {
+            return false;
+        }
     }
 
     private boolean isExcludedPath(String path) {
