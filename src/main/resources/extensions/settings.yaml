@@ -208,5 +208,5 @@ spec:
         - $formkit: textarea
           name: scheduledRefreshDirectories
           label: 定时刷新目录
-          help: 多个目录用英文逗号分隔，留空表示全部 URI（默认排除 /console 和 /api）
+          help: 多个目录用英文逗号分隔，/ 表示全部 URI；留空也表示全部（默认排除 /console 和 /api）
           placeholder: /,/archives,/categories

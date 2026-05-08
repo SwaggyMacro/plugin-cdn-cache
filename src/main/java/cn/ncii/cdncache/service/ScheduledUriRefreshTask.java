@@ -145,10 +145,14 @@ public class ScheduledUriRefreshTask {
                 .uri(sitemapUrl)
                 .retrieve()
                 .bodyToMono(String.class)
-                .map(this::extractLocUrlsFromSitemap);
+                .map(xml -> extractLocUrlsFromSitemap(xml, sitemapUrl));
     }
 
     List<String> extractLocUrlsFromSitemap(String xml) {
+        return extractLocUrlsFromSitemap(xml, "unknown");
+    }
+
+    private List<String> extractLocUrlsFromSitemap(String xml, String sitemapUrl) {
         try {
             DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
             factory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
@@ -170,7 +174,7 @@ public class ScheduledUriRefreshTask {
             }
             return new ArrayList<>(urls);
         } catch (Exception e) {
-            throw new IllegalStateException("解析 sitemap 失败", e);
+            throw new IllegalStateException("解析 sitemap 失败: " + sitemapUrl, e);
         }
     }
 
