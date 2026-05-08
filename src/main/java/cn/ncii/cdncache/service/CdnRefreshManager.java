@@ -232,6 +232,9 @@ public class CdnRefreshManager {
                             if (refresh.has("refreshTagPage")) setting.setRefreshTagPage(refresh.get("refreshTagPage").asBoolean(true));
                             if (refresh.has("refreshOnComment")) setting.setRefreshOnComment(refresh.get("refreshOnComment").asBoolean(true));
                             if (refresh.has("customPaths")) setting.setCustomPaths(refresh.get("customPaths").asText());
+                            if (refresh.has("scheduledRefreshEnabled")) setting.setScheduledRefreshEnabled(refresh.get("scheduledRefreshEnabled").asBoolean(false));
+                            if (refresh.has("scheduledRefreshCron")) setting.setScheduledRefreshCron(refresh.get("scheduledRefreshCron").asText("0 0 3 * * *"));
+                            if (refresh.has("scheduledRefreshDirectories")) setting.setScheduledRefreshDirectories(refresh.get("scheduledRefreshDirectories").asText());
                         })
                         .then(Mono.just(setting))
                         .switchIfEmpty(Mono.just(setting))

@@ -63,6 +63,21 @@ public class CdnSetting {
     private String customPaths;
 
     /**
+     * 是否启用定时 URI 刷新/预热
+     */
+    private Boolean scheduledRefreshEnabled = false;
+
+    /**
+     * 定时 URI 刷新 Cron 表达式
+     */
+    private String scheduledRefreshCron = "0 0 3 * * *";
+
+    /**
+     * 定时 URI 刷新目录（逗号分隔，留空表示全部）
+     */
+    private String scheduledRefreshDirectories;
+
+    /**
      * 归档页路由
      */
     private String archiveRoute = "archives";

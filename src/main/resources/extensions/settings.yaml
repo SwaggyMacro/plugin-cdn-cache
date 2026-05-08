@@ -191,3 +191,22 @@ spec:
           label: 自定义刷新路径
           help: 额外需要刷新的路径，多个路径用英文逗号分隔，例如：/about,/links,/sitemap.xml
           placeholder: /about,/links
+
+        - $formkit: checkbox
+          name: scheduledRefreshEnabled
+          label: 启用定时刷新/预热 URI
+          help: 按 Cron 表达式定时从 sitemap 获取 URI 并刷新 CDN 缓存
+          value: false
+
+        - $formkit: text
+          name: scheduledRefreshCron
+          label: 定时刷新 Cron
+          help: 6 位 Cron 表达式（秒 分 时 日 月 周），例如每天凌晨 3 点：0 0 3 * * *
+          value: "0 0 3 * * *"
+          placeholder: 0 0 3 * * *
+
+        - $formkit: textarea
+          name: scheduledRefreshDirectories
+          label: 定时刷新目录
+          help: 多个目录用英文逗号分隔，留空表示全部 URI（默认排除 /console 和 /api）
+          placeholder: /,/archives,/categories
